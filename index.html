@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Tesla Tetris - Pro Edition</title>
+	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+	<style>
+         body { background-color: #0f172a; color: white; overflow: hidden; font-family: 'Consolas', monospace; }
+         #game-container { display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; }
+         #field { 
+             position: relative; 
+             background-color: #1e293b; 
+             border: 4px solid #334155;
+             box-shadow: 0 0 20px rgba(0,0,0,0.5);
+             /* CRITICAL: content-box ensures the 220px width is for the INSIDE */
+             box-sizing: content-box; 
+         }
+         .block { position: absolute; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.1); border-radius: 2px; }
+         .fixed { border: 2px solid rgba(0,0,0,0.2); }
+         .ui-panel { margin-bottom: 1rem; font-size: 1.2rem; font-weight: bold; color: #60a5fa; }
+	</style>
+    </head>
+    <body>
+
+	<div id="game-container">
+            <div class="ui-panel">TESLA TETRIS v2.0</div>
+            <div id="field"></div>
+	</div>
+
+	<script>
+	 const CONFIG = {
+             COLS: 10,
+             ROWS: 20,
+             INITIAL_SPEED: 800,
+             BLOCK_SIZE: 22
+	 };
+
+	 const field = document.getElementById('field');
+	 field.style.width = `${CONFIG.COLS * CONFIG.BLOCK_SIZE}px`;
+	 field.style.height = `${CONFIG.ROWS * CONFIG.BLOCK_SIZE}px`;
+	 // 1 matrix moves down by a row
+	 //   delete a row/s and "gravity" down evry row around the matrix by shifting evrything by -
+	 /*Input:
+	    M - matrix to be shifted down
+	    fullRowsIdxes - indexes of rows that are full
+	    Output:-----------------------------finished
+	    M - where full rows are deleted and all rows from the
+	    above are moved down like "fallen"
+
+
+	    for fullRowIdx in fullRowsIdxes {
+	    for row in matrix until fullRowIdx in reverse {
+	    for col in range row.lenght {
+	    M[rowIdx+1][col] = M[rowIdx][col] 
+	    }
+	    // Set each element to false in M[rowIdx]
+	    } 
+	    }*/
+	 // 2 move the cosmetics down by a row
+	 //   move evrything thats above the deleted line by +1
+	 
+	 let matrix = Array.from({ length: CONFIG.ROWS }, () => Array(CONFIG.COLS).fill(null));
+	 let gameActive = true;
+
+	 class Tetromino {
+             constructor(coords, color) {
+		 this.coords = coords;
+		 this.color = color;
+		 
+		 // Calculate width to center it properly
+		 const minX = Math.min(...this.coords.map(c => c[0]));
+		 const maxX = Math.max(...this.coords.map(c => c[0]));
+		 const pieceWidth = maxX - minX + 1;
+		 
+		 this.x = Math.floor((CONFIG.COLS - pieceWidth) / 2) - minX;
+		 this.y = 0;
+
+		 this.elements = this.createElements();
+             }
+
+             createElements() {
+		 return this.coords.map(() => {
+                     const el = document.createElement('div');
+                     el.className = `block ${this.color}`;
+                     el.style.width = el.style.height = `${CONFIG.BLOCK_SIZE}px`;
+                     field.appendChild(el);
+                     return el;
+		 });
+             }
+
+             canMoveTo(nextX, nextY, nextCoords = this.coords) {
+		 return nextCoords.every(([dx, dy]) => {
+                     const nx = nextX + dx;
+                     const ny = nextY + dy;
+                     return (
+			 nx >= 0 && nx < CONFIG.COLS &&
+			 ny < CONFIG.ROWS &&
+			 (ny < 0 || !matrix[ny][nx])
+                     );
+		 });
+             }
+
+             rotate() {
+		 const rotated = this.coords.map(([dx, dy]) => [-dy, dx]);
+		 // Wall Kick Logic
+		 const positions = [this.x, this.x - 1, this.x + 1, this.x - 2, this.x + 2];
+		 for (let pos of positions) {
+                     if (this.canMoveTo(pos, this.y, rotated)) {
+			 this.x = pos;
+			 this.coords = rotated;
+			 return;
+                     }
+		 }
+             }
+
+             draw() {
+		 this.coords.forEach(([dx, dy], i) => {
+                     this.elements[i].style.left = `${(this.x + dx) * CONFIG.BLOCK_SIZE}px`;
+                     this.elements[i].style.top = `${(this.y + dy) * CONFIG.BLOCK_SIZE}px`;
+		 });
+             }
+
+             destroy() {
+		 this.elements.forEach(el => el.remove());
+             }
+	 }
+
+	 const PIECE_RECIPES = [
+             { coords: [[0,0], [-1,0], [1,0], [0,1]], color: 'bg-purple-500' }, // T
+             { coords: [[0,0], [1,0], [0,1], [1,1]], color: 'bg-yellow-500' }, // Square
+             { coords: [[0,0], [-1, 0], [1, 0], [-2, 0]], color: 'bg-cyan-500' },   // Line
+             { coords: [[0,0], [-1,0], [1,0], [1, 1]], color: 'bg-blue-500' }  // L
+	 ];
+	 
+	 function getRandomTetromino() {
+             const idx = Math.floor(Math.random() * PIECE_RECIPES.length);
+             const recipe = PIECE_RECIPES[idx];
+             return new Tetromino(recipe.coords, recipe.color);
+	 }
+
+	 let currentPiece = getRandomTetromino();
+	 let lastDropTime = 0;
+
+	 function drop() {
+             if (currentPiece.canMoveTo(currentPiece.x, currentPiece.y + 1)) {
+		 currentPiece.y++;
+             } else {
+		 lockPiece();
+             }
+	 }
+
+	 function lockPiece() {
+             let overflow = false;
+             currentPiece.coords.forEach(([dx, dy]) => {
+		 const finalX = currentPiece.x + dx;
+		 const finalY = currentPiece.y + dy;
+		 if (finalY < 0) {
+                     overflow = true;
+		 } else {
+                     matrix[finalY][finalX] = currentPiece.color;
+                     const el = document.createElement('div');
+                     el.className = `block fixed ${currentPiece.color}`;
+                     el.style.width = el.style.height = `${CONFIG.BLOCK_SIZE}px`;
+                     el.style.left = `${finalX * CONFIG.BLOCK_SIZE}px`;
+                     el.style.top = `${finalY * CONFIG.BLOCK_SIZE}px`;
+                     field.appendChild(el);
+		 }
+             });
+
+
+	     const rowsIds = findFilledRowIdxs()
+	     if (rowsIds.length > 0) {
+		 overflow = false // TODO: Make a smarter check for overflow size
+		 destroyFilledRows(rowsIds);
+		 reRenderField();
+		 
+	     }
+	     
+             currentPiece.destroy();
+             if (overflow) {
+		 gameActive = false;
+		 alert("GAME OVER");
+		 location.reload();
+		 return;
+             }
+
+             currentPiece = getRandomTetromino();
+             if (!currentPiece.canMoveTo(currentPiece.x, currentPiece.y)) {
+		 gameActive = false;
+		 alert("GAME OVER");
+		 location.reload();
+             }
+	 }
+
+	 function findFilledRowIdxs() {
+	      return matrix.map((row, idx) =>({row, idx}))
+		   .filter(({ row }) => row.every(cell => cell !== null))
+		       .map(({ idx }) => idx)
+	 }
+
+	 function destroyFilledRows(rowIdxs) {
+	     for (const rowIdxToDestory of rowIdxs) {
+		 
+		 for (let i = rowIdxToDestory; i > 0; i--) {
+		     for (let j = 0; j < matrix[i].length;j++) {
+			 matrix[i][j] = matrix[i - 1][j]
+		     }
+		 }
+
+		 for (let i = 0; i < matrix[0].length; i++) {
+		     matrix[0][i] = null;
+		 }
+	     }
+	     
+	 }
+
+	 function reRenderField() {
+	     document.querySelectorAll('.fixed').forEach(el => el.remove());
+	     for (let i = 0; i < matrix.length; i++) {
+		 for (let j = 0; j < matrix[i].length; j++){
+		     const color =  matrix[i][j]
+		     if (color == null) {
+			 continue
+		     }
+		     const el = document.createElement('div');
+		     el.className = `block fixed ${color}`;
+		     el.style.width = el.style.height = `${CONFIG.BLOCK_SIZE}px`;
+		     el.style.left = `${j * CONFIG.BLOCK_SIZE}px`;
+		     el.style.top = `${i * CONFIG.BLOCK_SIZE}px`;
+		     field.appendChild(el);
+		 }
+	     }
+	     
+	 }
+	 
+	 function gameLoop(now) {
+             if (!gameActive) return;
+             if (now - lastDropTime > CONFIG.INITIAL_SPEED) {
+		 drop();
+		 lastDropTime = now;
+             }
+             currentPiece.draw();
+             requestAnimationFrame(gameLoop);
+	 }
+
+	 window.addEventListener('keydown', (e) => {
+             if (!gameActive) return;
+             if (e.key === 'ArrowLeft' && currentPiece.canMoveTo(currentPiece.x - 1, currentPiece.y)) currentPiece.x--;
+             if (e.key === 'ArrowRight' && currentPiece.canMoveTo(currentPiece.x + 1, currentPiece.y)) currentPiece.x++;
+             if (e.key === 'ArrowDown') drop();
+             if (e.key === 'ArrowUp') currentPiece.rotate();
+	 });
+
+	 requestAnimationFrame(gameLoop);
+	</script>
+    </body>
+</html>
