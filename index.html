@@ -25,6 +25,7 @@
 
 	<div id="game-container">
             <div class="ui-panel">TESLA TETRIS v2.0</div>
+	    <div>Score: <span id="score"></span> </div>
             <div id="field"></div>
 	</div>
 
@@ -39,29 +40,10 @@
 	 const field = document.getElementById('field');
 	 field.style.width = `${CONFIG.COLS * CONFIG.BLOCK_SIZE}px`;
 	 field.style.height = `${CONFIG.ROWS * CONFIG.BLOCK_SIZE}px`;
-	 // 1 matrix moves down by a row
-	 //   delete a row/s and "gravity" down evry row around the matrix by shifting evrything by -
-	 /*Input:
-	    M - matrix to be shifted down
-	    fullRowsIdxes - indexes of rows that are full
-	    Output:-----------------------------finished
-	    M - where full rows are deleted and all rows from the
-	    above are moved down like "fallen"
-
-
-	    for fullRowIdx in fullRowsIdxes {
-	    for row in matrix until fullRowIdx in reverse {
-	    for col in range row.lenght {
-	    M[rowIdx+1][col] = M[rowIdx][col] 
-	    }
-	    // Set each element to false in M[rowIdx]
-	    } 
-	    }*/
-	 // 2 move the cosmetics down by a row
-	 //   move evrything thats above the deleted line by +1
-	 
+	 const scoreElement = document.getElementById('score');
 	 let matrix = Array.from({ length: CONFIG.ROWS }, () => Array(CONFIG.COLS).fill(null));
 	 let gameActive = true;
+	 let score = 0;
 
 	 class Tetromino {
              constructor(coords, color) {
@@ -124,6 +106,11 @@
              destroy() {
 		 this.elements.forEach(el => el.remove());
              }
+	  
+	     calculateScore() {
+		 return this.elements.length
+	     }
+	     
 	 }
 
 	 const PIECE_RECIPES = [
@@ -138,7 +125,7 @@
              const recipe = PIECE_RECIPES[idx];
              return new Tetromino(recipe.coords, recipe.color);
 	 }
-
+	 updateScoreDisplay()
 	 let currentPiece = getRandomTetromino();
 	 let lastDropTime = 0;
 
@@ -178,17 +165,20 @@
 	     }
 	     
              currentPiece.destroy();
+	     
              if (overflow) {
 		 gameActive = false;
-		 alert("GAME OVER");
+		 alert("GAME OVER: " + score);
 		 location.reload();
 		 return;
              }
 
+	     score += currentPiece.calculateScore()
+	     updateScoreDisplay()
              currentPiece = getRandomTetromino();
              if (!currentPiece.canMoveTo(currentPiece.x, currentPiece.y)) {
 		 gameActive = false;
-		 alert("GAME OVER");
+		 alert("GAME OVER: " + score);
 		 location.reload();
              }
 	 }
@@ -197,6 +187,15 @@
 	      return matrix.map((row, idx) =>({row, idx}))
 		   .filter(({ row }) => row.every(cell => cell !== null))
 		       .map(({ idx }) => idx)
+	 }
+
+	 function updateScoreDisplay() {
+		 scoreElement.innerText = score;
+	    }
+
+
+	 function scoredBoard () {
+	     printf("Hello world");
 	 }
 
 	 function destroyFilledRows(rowIdxs) {
