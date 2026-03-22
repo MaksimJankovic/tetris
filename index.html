@@ -3,7 +3,7 @@
     <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Tesla Tetris - Pro Edition</title>
+	<title>Tetris</title>
 	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 	<style>
          body { background-color: #0f172a; color: white; overflow: hidden; font-family: 'Consolas', monospace; }
@@ -24,7 +24,7 @@
     <body>
 
 	<div id="game-container">
-            <div class="ui-panel"> TETRIS</div>
+            <div class="ui-panel"> TETRIS </div>
 	    <div>Score: <span id="score"></span> </div>
             <div id="field"></div>
 	</div>
@@ -114,10 +114,13 @@
 	 }
 
 	 const PIECE_RECIPES = [
-             { coords: [[0,0], [-1,0], [1,0], [0,1]], color: 'bg-purple-500' }, // T
+             { coords: [[0,0], [-1,0], [1,0], [0,1]], color: 'bg-green-500' }, // T
              { coords: [[0,0], [1,0], [0,1], [1,1]], color: 'bg-yellow-500' }, // Square
              { coords: [[0,0], [-1, 0], [1, 0], [-2, 0]], color: 'bg-cyan-500' },   // Line
-             { coords: [[0,0], [-1,0], [1,0], [1, 1]], color: 'bg-blue-500' }  // L
+             { coords: [[0,0], [-1,0], [1,0], [1, 1]], color: 'bg-blue-500' },  // L
+	     { coords: [[0,0], [-1,0], [1,0], [1, - 1]], color: 'bg-purple-500' }, // anti L
+	     { coords: [[0,0], [-1,0], [0,1], [1,1]], color: 'bg-orange-500' },//Z
+	     { coords: [[0,0], [1,0], [0,1], [-1,1]], color: 'bg-red-500' },//retarded Z
 	 ];
 	 
 	 function getRandomTetromino() {
@@ -193,10 +196,6 @@
 		 scoreElement.innerText = score;
 	    }
 
-
-	 function scoredBoard () {
-	     printf("Hello world");
-	 }
 
 	 function destroyFilledRows(rowIdxs) {
 	     for (const rowIdxToDestory of rowIdxs) {
@@ -292,7 +291,7 @@
 		 if(dY > 0){
 		     direction = "up"		     
 		 } else {
-		     direction = "down"		     
+		     drop()		     
 		 }
 	     }
 	     movementHandler[direction]()
