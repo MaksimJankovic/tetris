@@ -18,13 +18,13 @@
          }
          .block { position: absolute; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.1); border-radius: 2px; }
          .fixed { border: 2px solid rgba(0,0,0,0.2); }
-         .ui-panel { margin-bottom: 1rem; font-size: 1.2rem; font-weight: bold; color: #60a5fa; }
+         .ui-panel { margin-bottom: 1rem; font-size: 1.5rem; font-weight: bold; color: #60a5fa; }
 	</style>
     </head>
     <body>
 
 	<div id="game-container">
-            <div class="ui-panel">TESLA TETRIS v2.0</div>
+            <div class="ui-panel"> TETRIS</div>
 	    <div>Score: <span id="score"></span> </div>
             <div id="field"></div>
 	</div>
@@ -244,12 +244,78 @@
              requestAnimationFrame(gameLoop);
 	 }
 
+	 // Movement control
+	 const movementHandler = {
+	     up: () => {
+		 currentPiece.rotate()
+	     },
+	     down: () => {
+		 drop()
+	     },
+	     left: () => {
+		 if(currentPiece.canMoveTo(currentPiece.x - 1, currentPiece.y)){
+		     currentPiece.x--;  
+		 }
+		  },
+	     right: ()=> {
+		 if (currentPiece.canMoveTo(currentPiece.x + 1, currentPiece.y)){
+		     currentPiece.x++;
+		 }
+	     },
+	 };
+	 // touch gestures and spipes :D
+	 let xStart = 0;
+	 let yStart = 0;
+	 
+	 window.addEventListener("touchstart", (e) => {
+	     xStart = e.changedTouches[0].pageX;
+	     yStart = e.changedTouches[0].pageY;
+
+	 });
+	 
+	 window.addEventListener("touchend", (e) => {
+	     let direction
+	     let xEnd = e.changedTouches[0].pageX;
+	     let yEnd = e.changedTouches[0].pageY;
+	     dX = xStart - xEnd
+	     dY = yStart - yEnd
+	     xStart = 0
+	     yStart = 0
+	     console.debug("delta", dY, dX)
+	     if(Math.abs(dX) > Math.abs(dY)){
+		 if(dX > 0){
+		     direction = "left"
+		 } else {
+		     direction = "right"
+		 }
+	     } else {
+		 if(dY > 0){
+		     direction = "up"		     
+		 } else {
+		     direction = "down"		     
+		 }
+	     }
+	     movementHandler[direction]()
+	 });
+	 
+
+	 // keyboard controls
 	 window.addEventListener('keydown', (e) => {
+	     let direction
              if (!gameActive) return;
-             if (e.key === 'ArrowLeft' && currentPiece.canMoveTo(currentPiece.x - 1, currentPiece.y)) currentPiece.x--;
-             if (e.key === 'ArrowRight' && currentPiece.canMoveTo(currentPiece.x + 1, currentPiece.y)) currentPiece.x++;
-             if (e.key === 'ArrowDown') drop();
-             if (e.key === 'ArrowUp') currentPiece.rotate();
+             if (e.key === 'ArrowLeft') {
+		 direction = "left";
+	     }
+	     else if (e.key === 'ArrowRight'){
+		 direction = "right"
+	     }
+	     else if (e.key === 'ArrowDown') {
+		 direction = "down"
+	     }
+             else if (e.key === 'ArrowUp') {
+		 direction = "up"
+	     }
+	     movementHandler[direction]()
 	 });
 
 	 requestAnimationFrame(gameLoop);
