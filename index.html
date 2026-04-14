@@ -109,7 +109,7 @@
              destroy() {
 		 this.elements.forEach(el => el.remove());
              }
-	  
+	     
 	     calculateScore() {
 		 return this.elements.length
 	     }
@@ -178,7 +178,7 @@
 		 location.reload();
 		 return;
              }
-
+	     
 	     score += currentPiece.calculateScore()
 	     updateScoreDisplay()
              currentPiece = getRandomTetromino();
@@ -190,14 +190,14 @@
 	 }
 
 	 function findFilledRowIdxs() {
-	      return matrix.map((row, idx) =>({row, idx}))
-		   .filter(({ row }) => row.every(cell => cell !== null))
-		       .map(({ idx }) => idx)
+	     return matrix.map((row, idx) =>({row, idx}))
+			  .filter(({ row }) => row.every(cell => cell !== null))
+			  .map(({ idx }) => idx)
 	 }
 
 	 function updateScoreDisplay() {
-		 scoreElement.innerText = score;
-	    }
+	     scoreElement.innerText = score;
+	 }
 
 
 	 function destroyFilledRows(rowIdxs) {
@@ -258,7 +258,7 @@
 		 if(currentPiece.canMoveTo(currentPiece.x - 1, currentPiece.y)){
 		     currentPiece.x--;  
 		 }
-		  },
+	     },
 	     right: ()=> {
 		 if (currentPiece.canMoveTo(currentPiece.x + 1, currentPiece.y)){
 		     currentPiece.x++;
