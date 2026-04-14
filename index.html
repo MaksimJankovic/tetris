@@ -48,6 +48,7 @@
 	 let matrix = Array.from({ length: CONFIG.ROWS }, () => Array(CONFIG.COLS).fill(null));
 	 let gameActive = true;
 	 let score = 0;
+	 
 	 class Tetromino {
              constructor(coords, color) {
 		 this.coords = coords;
@@ -171,21 +172,18 @@
 	     }
 	     
              currentPiece.destroy();
-	     
+	     console.log(score)
              if (overflow) {
-		 gameActive = false;
-		 alert("GAME OVER: " + score);
-		 location.reload();
-		 return;
+		 finishGame()
+		 return
              }
 	     
 	     score += currentPiece.calculateScore()
 	     updateScoreDisplay()
+
              currentPiece = getRandomTetromino();
              if (!currentPiece.canMoveTo(currentPiece.x, currentPiece.y)) {
-		 gameActive = false;
-		 alert("GAME OVER: " + score);
-		 location.reload();
+		 finishGame()
              }
 	 }
 
@@ -234,7 +232,17 @@
 	     }
 	 }
 
-	 // Whatever change I've made
+	 function finishGame() {
+	     const bestScore = Number(localStorage.getItem("bestScore"));
+	     gameActive = false;
+	     if (score > bestScore) {
+		 alert("New record 🎊\n\n" + "was: " + bestScore + "   new: " + score)
+		 localStorage.setItem("bestScore", score)
+	     } else {
+		 alert("GAME OVER. your score:  " + score + "\n\nBest score: " + bestScore);	 
+	     }
+	     location.reload();
+	 }
 	 
 	 function gameLoop(now) {
              if (!gameActive) return;
