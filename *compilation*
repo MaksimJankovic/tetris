@@ -1,0 +1,13 @@
+-*- mode: compilation; default-directory: "~/tetris/" -*-
+Compilation started at Sun May 17 15:42:19
+
+node server.js
+we are up and running
+scoreBoard [
+  { name: 'maksim', score: '9999' },
+  { name: 'Mark', score: '10' },
+  { name: 'And', score: 'rey' }
+]
+File successfully read, modified, and saved!
+
+Compilation finished at Sun May 17 15:42:19
