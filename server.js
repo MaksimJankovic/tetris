@@ -1,29 +1,49 @@
-const fs = require(`fs`).promises
+// -*- compile-command: "node server.js" -*-
+const { readFile, writeFile } = require('node:fs/promises');
 const http = require("node:http")
 
+function readScoreBoard() {
+    return readFile('./storage.txt', 'utf8')
+	.then((data) => {
+	    const board = [];
+	    const lines = data.trim().split("\n");
+	    for (let i = 0; i < lines.length; i++) {
+		const [name, score] = lines[i].split(":")
+		board.push({ name, score });
+	    }
+	    return board;
+	})
+}
 
-fs.readFile('./storage.txt', 'utf8')
-    .then((data) => {
-	console.log("[", data, "]")
-	const board = [];
-	const lines = data.split("\n");
-	for (let i = 0; i < lines.length - 1; i++) {
-	    console.log("line=", lines[i])
-	    const [name, score] = lines[i].split(":")
-	    board.push({ name: name, score: score });
+function updateUserScore(name, score) {
+    readScoreBoard().then((board) => {
+	let founded = true;
+	for(let i = 0; i < board.length; i++) {
+	    if (name !== board[i].name){
+		continue
+	    }
+	    if (score <= board[i].score){
+		return
+	    }
+	    board[i].score = score;
+	    founded = false;
 	}
-		
-	// parse data to board
-	console.log("board", board)
-	const html = renderScoreBoard(board)
-	console.log("html", html)
-
-	let problem = "turning string to an object"
+	if(founded){
+	    board.push({name, score});   
+	}
+	
+	writeScoreBoard(board);
     })
-    .catch((error) => {
-	// This single catch handles errors from BOTH readFile and writeFile
-	console.error('An error occurred during the file operations:', error.message);
-    });
+}
+
+function writeScoreBoard(board) {
+    let lines = [];
+    for (const row of board) {
+	lines.push(`${row.name}:${row.score}`);
+    }    
+    return writeFile('./storage.txt', lines.join("\n") , 'utf8')
+}
+
 
 function renderScoreBoard(board) {
     let scoreBoardHtml = `
@@ -34,7 +54,6 @@ function renderScoreBoard(board) {
   </tr>
 `
     for (const entry of board) {
-	console.log("entry", entry)
 	scoreBoardHtml += `<tr>
 <td>${entry.name}</td>
 <td>${entry.score}</td>
@@ -44,14 +63,15 @@ function renderScoreBoard(board) {
     scoreBoardHtml += `</table>`
     return scoreBoardHtml
 }
-
+        readScoreBoard()
 http
     .createServer((req, res) => {
 	console.log("we got a request", "request", req, "response", res)
 	res.writeHead(200, { "Content-Type": "text/html" })
 	const html = renderScoreBoard()
 	res.end(html)
+	    console.log(html);
     })
 //    .listen(8080)
 
-console.log("we are up and running")
+updateUserScore("maksim", 2000)

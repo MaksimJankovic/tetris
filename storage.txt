@@ -1,3 +1,4 @@
-maksim:9999
+maksim:2000
 Mark:10
 Andrey:666
+foo:100
