@@ -63,15 +63,35 @@ function renderScoreBoard(board) {
     scoreBoardHtml += `</table>`
     return scoreBoardHtml
 }
-        readScoreBoard()
+
+function handleGetIndex(req, res) {
+    res.writeHead(200, { "Content-Type": "text/html" })
+    readFile('./index.html', 'utf8')
+	.then(html => {
+	    res.end(html)
+	})	
+}
+
+function handleGetScoreBoard(req, res) {
+    res.writeHead(200, { "Content-Type": "text/html" })
+    readScoreBoard()
+	.then((board) => res.end(renderScoreBoard(board)))	
+}
+
 http
     .createServer((req, res) => {
-	console.log("we got a request", "request", req, "response", res)
-	res.writeHead(200, { "Content-Type": "text/html" })
-	const html = renderScoreBoard()
-	res.end(html)
-	    console.log(html);
+	const router = {
+	    "/": handleGetIndex,
+	    "/score-board": handleGetScoreBoard, 
+	}
+	const handler = router[req.url]
+	if (handler == null) {
+	    res.writeHead(404, { "Content-Type": "text/plain" })
+	    res.end(`Route ${req.url} not found`)
+	    return
+	}
+	handler(req, res)
     })
-//    .listen(8080)
+    .listen(8080)
 
-updateUserScore("maksim", 2000)
+console.log("running")

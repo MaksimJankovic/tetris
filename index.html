@@ -25,9 +25,9 @@
 	</style>
     </head>
     <body>
-
 	<div id="game-container">
             <div class="ui-panel"> TETRIS </div>
+	    <div id="score-board"></div>
 	    <div>Score: <span id="score"></span> </div>
             <div id="field"></div>
 	</div>
@@ -329,6 +329,12 @@
 	 });
 
 	 requestAnimationFrame(gameLoop);
+	</script>
+	<script>
+	 const scoreBoardDiv = document.querySelector("#score-board")
+	 fetch("/score-board")
+		.then((resp) => resp.text())
+	        .then((board) => scoreBoardDiv.innerHTML = board)
 	</script>
     </body>
 </html>
