@@ -78,11 +78,17 @@ function handleGetScoreBoard(req, res) {
 	.then((board) => res.end(renderScoreBoard(board)))	
 }
 
+function handleGetRegister(req, res) {
+    res.writeHead(200, { "Content-Type": "text/html" })
+    res.end("helloworld!")
+}
+
 http
     .createServer((req, res) => {
 	const router = {
 	    "/": handleGetIndex,
-	    "/score-board": handleGetScoreBoard, 
+	    "/score-board": handleGetScoreBoard,
+	    "/register": handleGetRegister,
 	}
 	const handler = router[req.url]
 	if (handler == null) {
