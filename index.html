@@ -302,7 +302,7 @@
 		 if(dY > 0){
 		     direction = "up"		     
 		 } else {
-		     drop()		     
+		    direction = "down"
 		 }
 	     }
 	     movementHandler[direction]()
@@ -312,6 +312,7 @@
 	 // keyboard controls
 	 window.addEventListener('keydown', (e) => {
 	     let direction
+	     console.log(typeof direction, direction)
              if (!gameActive) return;
              if (e.key === 'ArrowLeft') {
 		 direction = "left";
@@ -324,6 +325,8 @@
 	     }
              else if (e.key === 'ArrowUp') {
 		 direction = "up"
+	     } else {
+		 return
 	     }
 	     movementHandler[direction]()
 	 });
