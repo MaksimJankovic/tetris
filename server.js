@@ -49,9 +49,22 @@ function handleScoreBoard(req, res) {
 	    res.end("failed to read coreBoard")
 	})
 	.then(scoreBoard => {
-	    console.log("scoreBoard", scoreBoard["maksim"])
+	    console.log("scoreBoard", scoreBoard, "maksim's score", scoreBoard["maksim"])
 	    res.writeHeader(200, { "Content-Type": "text/html; charset=utf-8"})
-	    res.end("<p>not implemented yet</p>")
+	    const html = [
+		"<table>",
+		"<tr><th>Name</th> <th>Score</th></tr>"
+
+	    ]
+	    for(const [key, value] of  Object.entries(scoreBoard)) {
+		html.push(`<tr><th>${key}</th> <th>${value}</th></tr>`)
+		console.log(key,value)
+	    }
+	    html.push("</table>")
+	    console.log(html)
+	    
+	    res.end(html.join("\n"))
+	    
 	})
 }
 
@@ -81,5 +94,5 @@ const server = http.createServer((req, res) => {
 
 // Start the server on the specified port and hostname
 server.listen(PORT, HOSTNAME, () => {
-  console.log(`Server running at http://${HOSTNAME}:${PORT}/`);
+    console.log(`Server running at http://${HOSTNAME}:${PORT}/`);
 });
