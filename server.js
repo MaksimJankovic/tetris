@@ -69,16 +69,44 @@ function handleScoreBoard(req, res) {
 }
 
 function handleRegister(req, res) {
-    readFile('register.html', 'utf8')
-	.catch(err => {
-	    console.error("failed to read register.html with", err)
-	    res.writeHeader(500, { "Content-Type": "text/plain; charset=utf-8"})
-	    res.end("life maybe suck: " + err) 
+    switch (req.method) {
+    case "GET":
+	readFile('register.html', 'utf8')
+	    .catch(err => {
+		console.error("failed to read register.html with", err)
+		res.writeHeader(500, { "Content-Type": "text/plain; charset=utf-8"})
+		res.end("life maybe suck: " + err) 
+	    })
+	    .then(html => {
+		res.writeHeader(200, {
+		    "Content-Type": "text/html; charset=utf-8",
+		})
+		res.end(html)
+	    })
+	break;
+    case "POST":
+        let body = '';
+        req.on('data', (chunk) => {
+            body += chunk.toString();
+        });
+	req.on('end', () => {
+	    const formData = new URLSearchParams(body);
+	    const username = formData.get('username')
+	    if (username === "" || username == null) {
+		res.writeHeader(400, { "Content-Type": "text/html; charset=utf-8" })
+		res.end("BAD REQUEST")
+		return
+	    }
+	    res.writeHeader(200, {
+		"Content-Type": "text/html; charset=utf-8",
+		"Set-Cookie": `username=${username}`,
+	    })	
+	    res.end("Form submitted. Logged in as " + username)  
 	})
-	.then(html => {
-	    res.writeHeader(200, { "Content-Type": "text/html; charset=utf-8"})
-	    res.end(html)
-	})
+	break;
+    default:
+	handleNotFound(req, res)
+    }
 }
 
 const handleNotFound = (req, res) => {
@@ -100,7 +128,7 @@ const server = http.createServer((req, res) => {
     }
     handler(req, res)
     
-    console.log("got request to url:", req.url, "response status", res.statusCode)
+    console.log(req.method, "to", req.url, "response status", res.statusCode)
 });
 
 // Start the server on the specified port and hostname
