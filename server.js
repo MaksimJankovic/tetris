@@ -68,8 +68,17 @@ function handleScoreBoard(req, res) {
 	})
 }
 
-function handleRegister() {
-    
+function handleRegister(req, res) {
+    readFile('register.html', 'utf8')
+	.catch(err => {
+	    console.error("failed to read register.html with", err)
+	    res.writeHeader(500, { "Content-Type": "text/plain; charset=utf-8"})
+	    res.end("life maybe suck: " + err) 
+	})
+	.then(html => {
+	    res.writeHeader(200, { "Content-Type": "text/html; charset=utf-8"})
+	    res.end(html)
+	})
 }
 
 const handleNotFound = (req, res) => {
@@ -80,6 +89,7 @@ const handleNotFound = (req, res) => {
 const router = {
     "/": handleIndex,
     "/score-board": handleScoreBoard,
+    "/register": handleRegister,
 }
 
 // run the server
@@ -89,6 +99,7 @@ const server = http.createServer((req, res) => {
 	handler = handleNotFound
     }
     handler(req, res)
+    
     console.log("got request to url:", req.url, "response status", res.statusCode)
 });
 
