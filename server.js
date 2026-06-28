@@ -68,9 +68,7 @@ function handleScoreBoard(req, res) {
 	})
 }
 
-function handleRegister(req, res) {
-    switch (req.method) {
-    case "GET":
+function handleGetRegister(req, res) {
 	readFile('register.html', 'utf8')
 	    .catch(err => {
 		console.error("failed to read register.html with", err)
@@ -83,8 +81,11 @@ function handleRegister(req, res) {
 		})
 		res.end(html)
 	    })
-	break;
-    case "POST":
+    
+}
+
+
+function handlePostRegister(req, res) {
         let body = '';
         req.on('data', (chunk) => {
             body += chunk.toString();
@@ -92,6 +93,7 @@ function handleRegister(req, res) {
 	req.on('end', () => {
 	    const formData = new URLSearchParams(body);
 	    const username = formData.get('username')
+
 	    if (username === "" || username == null) {
 		res.writeHeader(400, { "Content-Type": "text/html; charset=utf-8" })
 		res.end("BAD REQUEST")
@@ -103,10 +105,7 @@ function handleRegister(req, res) {
 	    })	
 	    res.end("Form submitted. Logged in as " + username)  
 	})
-	break;
-    default:
-	handleNotFound(req, res)
-    }
+      
 }
 
 const handleNotFound = (req, res) => {
@@ -115,19 +114,20 @@ const handleNotFound = (req, res) => {
 }
 
 const router = {
-    "/": handleIndex,
-    "/score-board": handleScoreBoard,
-    "/register": handleRegister,
+    "GET /": handleIndex,
+    "GET /score-board": handleScoreBoard,
+    "GET /register": handleGetRegister,
+    "POST /register": handlePostRegister,
 }
 
 // run the server
 const server = http.createServer((req, res) => {
-    let handler = router[req.url]
+    const key = `${req.method} ${req.url}`
+    let handler = router[key]
     if (handler == null) {
 	handler = handleNotFound
     }
     handler(req, res)
-    
     console.log(req.method, "to", req.url, "response status", res.statusCode)
 });
 
