@@ -32,12 +32,18 @@ function handleIndex(req, res) {
     readFile('index.html', 'utf8')
     	.catch(err => {
 	    console.error("failed to read index.html with", err)
-	    res.writeHeader(500, { "Content-Type": "text/plain; charset=utf-8"})
-	    res.end("life sucks: " + err) 
+	    res.writeHeader(500, { "Content-Type": "text/plain; charset=utf-8" })
+	    res.end("life sucks: " + err)
 	})
 	.then(html => {
-	    res.writeHeader(200, { "Content-Type": "text/html; charset=utf-8"})
-	    res.end(html)
+	    let username = getCookie("username", req, res)
+	    if (username == null || username == "") {
+		res.writeHeader(303, { "Location": "/register" })
+		res.end()
+		return
+	    }
+	    res.writeHeader(200, { "Content-Type": "text/html; charset=utf-8", "Set-Cookie": `${Math.random()}=hehe` })
+	    res.end(html.replace("%username%", username))
 	})
 }
 
@@ -69,44 +75,57 @@ function handleScoreBoard(req, res) {
 }
 
 function handleGetRegister(req, res) {
-	readFile('register.html', 'utf8')
-	    .catch(err => {
-		console.error("failed to read register.html with", err)
-		res.writeHeader(500, { "Content-Type": "text/plain; charset=utf-8"})
-		res.end("life maybe suck: " + err) 
+    readFile('register.html', 'utf8')
+	.catch(err => {
+	    console.error("failed to read register.html with", err)
+	    res.writeHeader(500, { "Content-Type": "text/plain; charset=utf-8"})
+	    res.end("life maybe suck: " + err) 
+	})
+	.then(html => {
+	    res.writeHeader(200, {
+		"Content-Type": "text/html; charset=utf-8",
 	    })
-	    .then(html => {
-		res.writeHeader(200, {
-		    "Content-Type": "text/html; charset=utf-8",
-		})
-		res.end(html)
-	    })
+	    res.end(html)
+	})
     
 }
 
 
 function handlePostRegister(req, res) {
-        let body = '';
-        req.on('data', (chunk) => {
-            body += chunk.toString();
-        });
-	req.on('end', () => {
-	    const formData = new URLSearchParams(body);
-	    const username = formData.get('username')
+    let body = '';
+    req.on('data', (chunk) => {
+        body += chunk.toString();
+    });
+    req.on('end', () => {
+	const formData = new URLSearchParams(body);
+	const username = formData.get('username')
 
-	    if (username === "" || username == null) {
-		res.writeHeader(400, { "Content-Type": "text/html; charset=utf-8" })
-		res.end("BAD REQUEST")
-		return
-	    }
-	    res.writeHeader(200, {
-		"Content-Type": "text/html; charset=utf-8",
-		"Set-Cookie": `username=${username}`,
-	    })	
-	    res.end("Form submitted. Logged in as " + username)  
-	})
-      
+	if (username === "" || username == null) {
+	    res.writeHeader(400, { "Content-Type": "text/html; charset=utf-8" })
+	    res.end("BAD REQUEST")
+	    return
+	}
+	res.writeHeader(303, {
+	    "Location": "/",
+	    "Set-Cookie": `username=${username}`,
+	})	
+	res.end()
+    })
+    
 }
+function getCookie(name, req, res) {
+    let cookies = req.headers.cookie
+    if (cookies == null) {
+	return
+    }
+    cookies = `{"${cookies}"}`
+    cookies = cookies.replaceAll(`=`, `": "`).replaceAll(`; `, `", "`)
+    console.log("its raining cookies", cookies)
+    cookies =  JSON.parse(cookies)
+    console.log("username of cookie", typeof cookies, cookies)
+    return cookies[name]
+}
+
 
 const handleNotFound = (req, res) => {
     res.writeHeader(404, { "Content-Type": "text/html; charset=utf-8"})
@@ -128,7 +147,7 @@ const server = http.createServer((req, res) => {
 	handler = handleNotFound
     }
     handler(req, res)
-    console.log(req.method, "to", req.url, "response status", res.statusCode)
+    console.log(getCookie("username", req, res))
 });
 
 // Start the server on the specified port and hostname
