@@ -9,7 +9,7 @@ function findOutput(input) {
     input = `{"${input}"}`
     input = input.replaceAll(`=`, `": "`).replaceAll(`; `, `", "`)
     input = JSON.parse(input);
-    return input.something
+    return input.)something
 }
 
 console.log("solved:", findOutput(input) === output)

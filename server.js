@@ -47,7 +47,7 @@ function handleIndex(req, res) {
 	})
 }
 
-function handleScoreBoard(req, res) {
+function handleGetScoreBoard(req, res) {
     readScoreBoardFromFile()
     	.catch((error) => {
 	    console.error("failed to read scoreboard with", error)
@@ -72,6 +72,21 @@ function handleScoreBoard(req, res) {
 	    res.end(html.join("\n"))
 	    
 	})
+}
+
+function handlePostScoreBoard(req, res){
+    let body = ''
+    let username = getCookie("username", req, res)
+    req.on('data', (chunk)=>{
+	body += chunk.toString()
+    })
+    
+    req.on('end', ()=>{
+	body = JSON.parse(body)
+	console.log("body", body, "username", username, "score", body.score)
+    })
+    res.end()
+    
 }
 
 function handleGetRegister(req, res) {
@@ -134,7 +149,8 @@ const handleNotFound = (req, res) => {
 
 const router = {
     "GET /": handleIndex,
-    "GET /score-board": handleScoreBoard,
+    "GET /score-board": handleGetScoreBoard,
+    "POST /score-board": handlePostScoreBoard,
     "GET /register": handleGetRegister,
     "POST /register": handlePostRegister,
 }
